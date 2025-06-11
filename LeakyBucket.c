@@ -1,40 +1,38 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 
-// Function to simulate the Leaky Bucket algorithm
-void leakyBucket(int *bucket, int packetSize, int bucketSize, int outputRate) {
-    int time = 0;
+void leakyBucket(int *bucket, int packetSize, int bucketSize, int outputRate, int time) {
+    printf("\nTime %d sec:\n", time);
+    printf("Incoming Packet Size: %d bytes\n", packetSize);
 
-    // Check if packet can fit into the bucket
+    // Check for overflow
     if (*bucket + packetSize > bucketSize) {
-        printf("\nBucket Overflow! Packet of size %d bytes is dropped.\n", packetSize);
-    } else {
-        *bucket += packetSize;  
-        printf("\nPacket of size %d bytes added to the bucket.\n", packetSize);
+        printf("Bucket Overflow! Dropped %d bytes\n", packetSize);
+        return;
     }
 
-    // Output data at the constant rate (leaky rate)
-    while (*bucket > 0) {
-        sleep(1);  /
-        time++;
+    // Accept the packet
+    *bucket += packetSize;
+    printf("Added %d bytes to bucket. Current bucket level: %d bytes\n", packetSize, *bucket);
 
+    // Leak/output data at fixed rate
+    while (*bucket > 0) {
+        sleep(1);
         if (*bucket >= outputRate) {
-            *bucket -= outputRate;  
-            printf("\nTime %d Sec: %d bytes Outputted from bucket.\n", time, outputRate);
+            *bucket -= outputRate;
+            printf("Leaked %d bytes. Remaining in bucket: %d bytes\n", outputRate, *bucket);
         } else {
-            printf("\nTime %d Sec: %d bytes Outputted (last packet).\n", time, *bucket);
-            *bucket = 0;  
+            printf("Leaked %d bytes. Bucket now empty.\n", *bucket);
+            *bucket = 0;
         }
     }
-    printf("\nBucket Output Successful.\n");
 }
 
 int main() {
-    int bucket = 0;  
-    int bucketSize, outputRate, numPackets, packetSize, delay, time = 0;
+    int bucket = 0;
+    int bucketSize, outputRate, numPackets, packetSize;
 
-    printf("Enter Bucket Size (Maximum Capacity): ");
+    printf("Enter Bucket Size (in bytes): ");
     scanf("%d", &bucketSize);
 
     printf("Enter Output Rate (bytes/sec): ");
@@ -43,21 +41,12 @@ int main() {
     printf("Enter Number of Packets: ");
     scanf("%d", &numPackets);
 
-    // Process each packet
     for (int i = 0; i < numPackets; i++) {
-        delay = rand() % 3;  // Random delay to simulate packet arrival time
-        sleep(delay);
-        time += delay;
+        printf("\nEnter Packet %d Size (1–5 bytes recommended): ", i + 1);
+        scanf("%d", &packetSize);
 
-        packetSize = rand() % 1000;  
-        printf("\n---------------------------\n");
-        printf("Time %d Sec\n", time);
-        printf("Packet Number %d\n", i);
-        printf("Packet Size %d bytes\n", packetSize);
-
-        leakyBucket(&bucket, packetSize, bucketSize, outputRate);
+        leakyBucket(&bucket, packetSize, bucketSize, outputRate, i + 1);
     }
 
     return 0;
 }
-
