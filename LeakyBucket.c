@@ -1,9 +1,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
-void leakyBucket(int *bucket, int packetSize, int bucketSize, int outputRate, int time) {
-    printf("\nTime %d sec:\n", time);
-    printf("Incoming Packet Size: %d bytes\n", packetSize);
+void leakyBucket(int *bucket, int packetSize, int bucketSize, int outputRate) {
+    printf("\nIncoming Packet Size: %d bytes\n", packetSize);
 
     // Check for overflow
     if (*bucket + packetSize > bucketSize) {
@@ -13,26 +12,21 @@ void leakyBucket(int *bucket, int packetSize, int bucketSize, int outputRate, in
 
     // Accept the packet
     *bucket += packetSize;
-    printf("Added %d bytes to bucket. Current bucket level: %d bytes\n", packetSize, *bucket);
+    printf("Accepted %d bytes. Bucket Level: %d bytes\n", packetSize, *bucket);
 
     // Leak/output data at fixed rate
     while (*bucket > 0) {
         sleep(1);
-        if (*bucket >= outputRate) {
-            *bucket -= outputRate;
-            printf("Leaked %d bytes. Remaining in bucket: %d bytes\n", outputRate, *bucket);
-        } else {
-            printf("Leaked %d bytes. Bucket now empty.\n", *bucket);
-            *bucket = 0;
-        }
+        int leak = (*bucket >= outputRate) ? outputRate : *bucket;
+        *bucket -= leak;
+        printf("Leaked %d bytes. Remaining: %d bytes\n", leak, *bucket);
     }
 }
 
 int main() {
-    int bucket = 0;
-    int bucketSize, outputRate, numPackets, packetSize;
+    int bucket = 0, bucketSize, outputRate, numPackets, packetSize;
 
-    printf("Enter Bucket Size (in bytes): ");
+    printf("Enter Bucket Size (bytes): ");
     scanf("%d", &bucketSize);
 
     printf("Enter Output Rate (bytes/sec): ");
@@ -42,10 +36,9 @@ int main() {
     scanf("%d", &numPackets);
 
     for (int i = 0; i < numPackets; i++) {
-        printf("\nEnter Packet %d Size (1–5 bytes recommended): ", i + 1);
+        printf("\nEnter Packet %d Size: ", i + 1);
         scanf("%d", &packetSize);
-
-        leakyBucket(&bucket, packetSize, bucketSize, outputRate, i + 1);
+        leakyBucket(&bucket, packetSize, bucketSize, outputRate);
     }
 
     return 0;
