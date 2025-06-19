@@ -1,102 +1,87 @@
 #include <stdio.h>
 #include <string.h>
-#define SIZE 30
+#include <ctype.h>
 
-void toLower(char *s, int n) {
-    for (int i = 0; i < n; i++)
-        if (s[i] >= 'A' && s[i] <= 'Z') s[i] += 32;
-}
+void makeTable(char key[], char table[5][5]) {
+    int used[26] = {0}, k = 0;
+    used['j' - 'a'] = 1;  // 'j' is treated as 'i'
 
-int removeSpaces(char *s, int n) {
-    int k = 0;
-    for (int i = 0; i < n; i++)
-        if (s[i] != ' ') s[k++] = s[i];
-    s[k] = '\0';
-    return k;
-}
-
-int mod5(int x) { return (x + 5) % 5; }
-
-void genKey(char *key, int n, char tab[5][5]) {
-    int used[26] = {0}, i = 0, j = 0;
-    used['j' - 'a'] = 1;
-    for (int k = 0; k < n; k++) {
-        int ch = key[k] - 'a';
-        if (!used[ch]) {
-            tab[i][j++] = key[k];
-            used[ch] = 1;
-            if (j == 5) i++, j = 0;
+    for (int i = 0; key[i]; i++) {
+        char c = tolower(key[i]);
+        if (c < 'a' || c > 'z') continue;
+        if (!used[c - 'a']) {
+            table[k / 5][k % 5] = c;
+            used[c - 'a'] = 1;
+            k++;
         }
     }
-    for (int ch = 0; ch < 26; ch++) {
-        if (!used[ch]) {
-            tab[i][j++] = ch + 'a';
-            if (j == 5) i++, j = 0;
+
+    for (char c = 'a'; c <= 'z'; c++) {
+        if (!used[c - 'a']) {
+            table[k / 5][k % 5] = c;
+            used[c - 'a'] = 1;
+            k++;
         }
     }
 }
 
-void find(char tab[5][5], char a, char b, int pos[]) {
+void findPos(char table[5][5], char a, char b, int pos[]) {
     if (a == 'j') a = 'i';
     if (b == 'j') b = 'i';
     for (int i = 0; i < 5; i++)
         for (int j = 0; j < 5; j++) {
-            if (tab[i][j] == a) pos[0] = i, pos[1] = j;
-            if (tab[i][j] == b) pos[2] = i, pos[3] = j;
+            if (table[i][j] == a) { pos[0] = i; pos[1] = j; }
+            if (table[i][j] == b) { pos[2] = i; pos[3] = j; }
         }
 }
 
-int prepareText(char *s, int n) {
-    if (n % 2 != 0) s[n++] = 'z', s[n] = '\0';
-    return n;
-}
+void applyPlayfair(char text[], char table[5][5], int encrypt) {
+    int len = strlen(text);
+    if (len % 2 != 0) text[len++] = 'z';
+    text[len] = '\0';
 
-void playfair(char *s, char tab[5][5], int n, int enc) {
-    int p[4];
-    for (int i = 0; i < n; i += 2) {
-        find(tab, s[i], s[i+1], p);
+    for (int i = 0; i < len; i += 2) {
+        int p[4];
+        findPos(table, text[i], text[i+1], p);
+
         if (p[0] == p[2]) {
-            s[i] = tab[p[0]][mod5(p[1] + enc)];
-            s[i+1] = tab[p[0]][mod5(p[3] + enc)];
+            text[i]   = table[p[0]][(p[1] + encrypt + 5) % 5];
+            text[i+1] = table[p[2]][(p[3] + encrypt + 5) % 5];
         } else if (p[1] == p[3]) {
-            s[i] = tab[mod5(p[0] + enc)][p[1]];
-            s[i+1] = tab[mod5(p[2] + enc)][p[1]];
+            text[i]   = table[(p[0] + encrypt + 5) % 5][p[1]];
+            text[i+1] = table[(p[2] + encrypt + 5) % 5][p[1]];
         } else {
-            s[i] = tab[p[0]][p[3]];
-            s[i+1] = tab[p[2]][p[1]];
+            text[i]   = table[p[0]][p[3]];
+            text[i+1] = table[p[2]][p[1]];
         }
     }
 }
 
 int main() {
-    char text[SIZE], key[SIZE], tab[5][5];
+    char key[100], text[100], table[5][5];
     int choice;
 
-    printf("Enter key: ");
-    fgets(key, SIZE, stdin);
-    key[strcspn(key, "\n")] = '\0';
+    printf("Enter key (no spaces): ");
+    scanf("%s", key);
 
-    printf("Enter text: ");
-    fgets(text, SIZE, stdin);
-    text[strcspn(text, "\n")] = '\0';
+    printf("Enter text (no spaces): ");
+    scanf("%s", text);
 
     printf("1. Encrypt\n2. Decrypt\nChoice: ");
     scanf("%d", &choice);
 
-    int kt = strlen(key), pt = strlen(text);
-    kt = removeSpaces(key, kt);
-    pt = removeSpaces(text, pt);
-    toLower(key, kt);
-    toLower(text, pt);
-    pt = prepareText(text, pt);
-    genKey(key, kt, tab);
+    // Convert key and text to lowercase
+    for (int i = 0; key[i]; i++) key[i] = tolower(key[i]);
+    for (int i = 0; text[i]; i++) text[i] = tolower(text[i]);
+
+    makeTable(key, table);
 
     if (choice == 1) {
-        playfair(text, tab, pt, +1);
-        printf("Cipher: %s\n", text);
+        applyPlayfair(text, table, 1);
+        printf("Encrypted: %s\n", text);
     } else if (choice == 2) {
-        playfair(text, tab, pt, -1);
-        printf("Plain: %s\n", text);
+        applyPlayfair(text, table, -1);
+        printf("Decrypted: %s\n", text);
     } else {
         printf("Invalid choice.\n");
     }
