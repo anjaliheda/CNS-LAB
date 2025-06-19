@@ -2,7 +2,7 @@
 #include <string.h>
 #define POLYNOMIAL "10001000000100001" // CRC-CCITT (X.25)
 
-void xorOperation(char *data, const char *poly, int poly_len) {
+void xor(char *data, const char *poly, int poly_len) {
     for (int i = 0; i < poly_len; i++)
         data[i] = (data[i] == poly[i]) ? '0' : '1';
 }
@@ -20,7 +20,7 @@ void crcCheck(const char *data, const char *poly, char *codeword) {
     // Step 2: Perform bitwise division (XOR where needed)
     for (int i = 0; i <= totalLen - polyLen; i++) {
         if (temp[i] == '1') {
-            xorOperation(&temp[i], poly, polyLen);
+            xor(&temp[i], poly, polyLen);
         }
     }
     // Step 3: Build final codeword = original data + remainder
@@ -36,7 +36,7 @@ void detectError(const char *codeword, const char *poly) {
     strcpy(temp, codeword);
 
     for (int i = 0; i <= len - poly_len; i++)
-        if (temp[i] == '1') xorOperation(&temp[i], poly, poly_len);
+        if (temp[i] == '1') xor(&temp[i], poly, poly_len);
     
     for (int i = len - poly_len + 1; i < len; i++)
         if (temp[i] == '1') {
