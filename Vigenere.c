@@ -16,6 +16,7 @@ void process(int mode) {
     scanf("%s", key);
 
     int len = strlen(msg), klen = strlen(key);
+    
     for (int i = 0; i < len; i++)
         res[i] = shift(msg[i], key[i % klen], mode);
     res[len] = '\0';
@@ -25,13 +26,14 @@ void process(int mode) {
 
 int main() {
     int ch;
-    while (1) {
-        printf("Vigenère Cipher\n1 - Encrypt\n2 - Decrypt\n3 - Quit\nChoice: ");
-        scanf("%d", &ch);
-        if (ch == 1) process(1);
-        else if (ch == 2) process(-1);
-        else if (ch == 3) break;
-        else printf("Invalid choice!\n");
-    }
+    printf("Vigenère Cipher\n1 - Encrypt\n2 - Decrypt\nChoice: ");
+    scanf("%d", &ch);
+    if (ch == 1) 
+        process(1);
+    else if (ch == 2)
+        process(-1);
+    else 
+        printf("Invalid choice!\n");
+    
     return 0;
 }
