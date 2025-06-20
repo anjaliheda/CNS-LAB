@@ -34,10 +34,10 @@ void detectError(const char *codeword, const char *poly) {
     int poly_len = strlen(poly);
     char temp[200];
     strcpy(temp, codeword);
-
+    //XOR
     for (int i = 0; i <= len - poly_len; i++)
         if (temp[i] == '1') xor(&temp[i], poly, poly_len);
-    
+    //Remainder Bits
     for (int i = len - poly_len + 1; i < len; i++)
         if (temp[i] == '1') {
             printf("Error detected\n");
